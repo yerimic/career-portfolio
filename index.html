@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>항공 예약 시스템(PSS) 운영 및 고도화 | 경력 포트폴리오</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  :root{
+    --bg:#ffffff;
+    --sidebar-bg:#fbfbfa;
+    --text:#37352f;
+    --text-light:#787774;
+    --text-faint:#9b9a97;
+    --border:#e9e9e7;
+    --hover:#f1f1ef;
+    --accent:#2383e2;
+    --accent-light:#e7f3f8;
+    --accent-text:#0b6e99;
+    --tag-blue:#d3e5ef;
+    --tag-purple:#e8deee;
+    --tag-green:#dbeddb;
+    --tag-orange:#faebdd;
+    --tag-yellow:#fbf3db;
+    --radius:6px;
+    --sidebar-w:260px;
+  }
+
+  html,body{
+    font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",-apple-system,
+      BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji",sans-serif;
+    color:var(--text); background:var(--bg); line-height:1.7; font-size:16px;
+  }
+
+  /* ---------- layout ---------- */
+  .layout{ display:flex; min-height:100vh; }
+
+  .sidebar{
+    width:var(--sidebar-w); flex-shrink:0; background:var(--sidebar-bg);
+    border-right:1px solid var(--border); position:sticky; top:0; height:100vh;
+    padding:22px 12px; overflow-y:auto;
+  }
+  .sidebar-title{
+    font-size:13px; font-weight:700; color:var(--text-light);
+    padding:4px 10px 14px; letter-spacing:.02em;
+  }
+  .sidebar nav a{
+    display:flex; align-items:center; gap:8px; padding:7px 10px; border-radius:4px;
+    color:var(--text); text-decoration:none; font-size:14px; margin-bottom:1px;
+    transition:background .15s; white-space:nowrap;
+  }
+  .sidebar nav a:hover{ background:var(--hover); }
+  .sidebar nav a.active{ background:var(--hover); font-weight:700; }
+  .sidebar .divider{ border-top:1px solid var(--border); margin:10px 6px; }
+
+  .content{ flex:1; min-width:0; }
+
+  .cover{
+    width:100%; height:160px;
+    background:linear-gradient(135deg,#e7f3f8 0%, #ffffff 55%, #fbf3db 100%);
+  }
+
+  .page{ max-width:760px; margin:0 auto; padding:0 24px 120px; }
+
+  .page-icon{
+    font-size:46px; margin-top:-34px; margin-bottom:10px; width:80px; height:80px;
+    display:flex; align-items:center; justify-content:center;
+    background:#fff; border-radius:50%; box-shadow:0 2px 10px rgba(0,0,0,.08);
+  }
+
+  .page-title{
+    font-size:2.1rem; font-weight:800; margin:6px 0 4px; letter-spacing:-.01em;
+  }
+  .page-subtitle{ color:var(--text-light); font-size:.98rem; margin-bottom:22px; }
+
+  /* ---------- hint ---------- */
+  .hint{
+    display:flex; gap:10px; background:var(--accent-light); border-radius:var(--radius);
+    padding:12px 14px; font-size:13px; color:var(--accent-text); margin-bottom:26px;
+    line-height:1.6;
+  }
+  .hint b{ font-weight:700; }
+
+  /* ---------- properties ---------- */
+  .properties{ border:1px solid var(--border); border-radius:var(--radius); margin-bottom:32px; }
+  .prop-row{ display:flex; align-items:flex-start; padding:9px 14px; border-bottom:1px solid var(--border); }
+  .prop-row:last-child{ border-bottom:none; }
+  .prop-label{
+    width:128px; flex-shrink:0; color:var(--text-light); font-size:13px;
+    font-weight:600; display:flex; align-items:center; gap:6px; padding-top:1px;
+  }
+  .prop-value{ flex:1; font-size:14px; outline:none; border-radius:3px; padding:1px 4px; }
+  [contenteditable]:empty:before{ content: attr(data-placeholder); color:var(--text-faint); }
+  [contenteditable]:focus{ background:var(--accent-light); }
+
+  /* ---------- gallery ---------- */
+  h2.overview-title{ font-size:1.4rem; font-weight:800; margin:8px 0 4px; display:flex; align-items:center; gap:10px; }
+  .overview-desc{ color:var(--text-light); font-size:14px; margin-bottom:16px; }
+  .gallery{ display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin:0 0 40px; }
+  .card{
+    border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px;
+    text-decoration:none; color:var(--text); display:block;
+    transition:box-shadow .15s, transform .15s;
+  }
+  .card:hover{ box-shadow:0 4px 14px rgba(0,0,0,.07); transform:translateY(-2px); }
+  .card-head{ display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .card-icon{ font-size:18px; }
+  .card-title{ font-weight:700; font-size:14px; }
+  .card-desc{ font-size:12.5px; color:var(--text-light); line-height:1.55; margin-bottom:10px; min-height:54px; }
+  .tag{ display:inline-block; font-size:.76rem; font-weight:700; padding:3px 10px; border-radius:4px; }
+  .tag-blue{ background:var(--tag-blue); }
+  .tag-purple{ background:var(--tag-purple); }
+  .tag-green{ background:var(--tag-green); }
+  .tag-orange{ background:var(--tag-orange); }
+  .tag-yellow{ background:var(--tag-yellow); }
+
+  /* ---------- sections ---------- */
+  hr.divider{ border:none; border-top:1px solid var(--border); margin:36px 0; }
+
+  h2.section-title{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    font-size:1.45rem; font-weight:800; margin:8px 0 16px;
+  }
+  h3.group-title{
+    font-size:1.04rem; font-weight:700; margin:22px 0 8px;
+    padding-left:12px; border-left:3px solid var(--accent);
+  }
+
+  ul.notion-list{ list-style:none; margin:0 0 4px; padding:0; }
+  ul.notion-list li{
+    position:relative; padding-left:20px; margin-bottom:7px;
+    font-size:14.5px; line-height:1.7; color:var(--text);
+  }
+  ul.notion-list li::before{
+    content:"•"; position:absolute; left:4px; color:var(--text-faint); font-weight:700;
+  }
+
+  .callout{
+    display:flex; gap:12px; background:var(--accent-light); border-radius:var(--radius);
+    padding:16px 18px; margin:24px 0 8px;
+  }
+  .callout-icon{ font-size:20px; line-height:1.5; }
+  .callout-title{ font-weight:800; margin-bottom:8px; color:var(--accent-text); font-size:14.5px; }
+  .callout ul.notion-list li{ font-size:14px; margin-bottom:5px; }
+  .callout ul.notion-list li::before{ content:"›"; color:var(--accent); font-weight:800; }
+
+  h4.table-title{
+    display:flex; align-items:center; gap:6px; font-size:.96rem; font-weight:700;
+    color:var(--text-light); margin:30px 0 4px;
+  }
+  .table-hint{ font-size:12px; color:var(--text-faint); margin-bottom:8px; line-height:1.6; }
+
+  table.db-table{
+    width:100%; border-collapse:collapse; font-size:13.5px;
+    margin:0 0 8px; border:1px solid var(--border); border-radius:var(--radius); overflow:hidden;
+  }
+  table.db-table th{
+    background:var(--hover); text-align:left; padding:8px 12px; font-weight:700;
+    border-bottom:1px solid var(--border); border-right:1px solid var(--border);
+  }
+  table.db-table th:last-child, table.db-table td:last-child{ border-right:none; }
+  table.db-table td{
+    padding:10px 12px; border-bottom:1px solid var(--border);
+    border-right:1px solid var(--border); vertical-align:top; min-width:80px;
+  }
+  table.db-table tbody tr:last-child td{ border-bottom:none; }
+  table.db-table td[contenteditable]:focus{
+    outline:2px solid var(--accent); outline-offset:-2px; background:var(--accent-light);
+  }
+  table.db-table td[contenteditable]:empty:before{
+    content: attr(data-placeholder); color:var(--text-faint); font-style:italic;
+  }
+  .add-row td{ color:var(--text-light); cursor:pointer; font-size:13px; }
+  .add-row:hover td{ background:var(--hover); color:var(--accent); font-weight:600; }
+
+  /* ---------- print button ---------- */
+  .print-btn{
+    position:fixed; right:24px; bottom:24px; background:#fff; border:1px solid var(--border);
+    border-radius:8px; padding:10px 16px; font-size:13px; font-weight:700;
+    box-shadow:0 4px 14px rgba(0,0,0,.08); cursor:pointer; display:flex; align-items:center; gap:6px;
+    color:var(--text); z-index:40;
+  }
+  .print-btn:hover{ background:var(--hover); }
+
+  /* ---------- mobile ---------- */
+  .menu-btn{
+    display:none; position:fixed; top:14px; left:14px; z-index:60;
+    width:38px; height:38px; border-radius:8px; border:1px solid var(--border);
+    background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.08); align-items:center;
+    justify-content:center; cursor:pointer; font-size:16px;
+  }
+
+  @media (max-width:880px){
+    .sidebar{
+      position:fixed; left:0; top:0; transform:translateX(-100%);
+      transition:transform .2s ease; z-index:55; box-shadow:6px 0 16px rgba(0,0,0,.08);
+    }
+    .sidebar.open{ transform:translateX(0); }
+    .menu-btn{ display:flex; }
+    .page{ padding:0 16px 100px; }
+    .page-title{ font-size:1.7rem; }
+    .prop-label{ width:104px; font-size:12px; }
+  }
+
+  @media print{
+    .sidebar, .menu-btn, .print-btn, .add-row, .hint{ display:none !important; }
+    .layout{ display:block; }
+    .cover{ height:70px; }
+    .page{ max-width:100%; padding:0 28px 40px; }
+    h2.section-title{ page-break-before:always; }
+    h2.section-title.no-break{ page-break-before:auto; }
+    body{ font-size:12px; }
+    .gallery{ grid-template-columns:repeat(2,1fr); }
+  }
+</style>
+</head>
+<body>
+<button class="menu-btn" aria-label="메뉴 열기">☰</button>
+
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-title">PSS 운영 · 고도화 포트폴리오</div>
+    <nav>
+      <a href="#overview">🧭 한눈에 보기</a>
+      <div class="divider"></div>
+      <a href="#sec01">🛠️ 01 운영 · 서비스 관리</a>
+      <a href="#sec02">🔗 02 시스템 고도화 · 연동</a>
+      <a href="#sec03">🎓 03 사용자 역량 강화</a>
+      <a href="#sec04">🧩 04 비즈니스 구현 검토</a>
+      <a href="#sec05">🚀 05 DX 전략 · 과제 추진</a>
+    </nav>
+  </aside>
+
+  <main class="content">
+    <div class="cover"></div>
+    <div class="page">
+
+      <div class="page-icon">✈️</div>
+      <h1 class="page-title">항공 예약 시스템(PSS) 운영 및 고도화</h1>
+      <p class="page-subtitle">Career Portfolio · PSS Operations &amp; Digital Transformation</p>
+
+      <div class="hint">
+        📝 <div><b>이 페이지는 직접 편집할 수 있습니다.</b> 회색 안내 문구가 보이는 칸을 클릭해 본인 정보를 입력하고, 각 영역 하단의 "수행 이력" 표에는 관련 프로젝트 · 과제를 추가해 보세요. 작성 후 우측 하단 버튼으로 PDF로 저장하거나 Notion에 붙여넣어 사용할 수 있습니다.</div>
+      </div>
+
+      <!-- properties -->
+      <div class="properties">
+        <div class="prop-row">
+          <div class="prop-label">📁 프로젝트</div>
+          <div class="prop-value" contenteditable="true" data-placeholder="항공 예약 시스템(PSS) 운영 및 고도화 프로젝트명을 입력하세요"></div>
+        </div>
+        <div class="prop-row">
+          <div class="prop-label">🗓️ 수행 기간</div>
+          <div class="prop-value" contenteditable="true" data-placeholder="예: 2022.01 ~ 2025.12 (Y1~Y4)"></div>
+        </div>
+        <div class="prop-row">
+          <div class="prop-label">👤 담당 역할</div>
+          <div class="prop-value" contenteditable="true" data-placeholder="예: PSS 운영 담당 / 시스템 운영 PM"></div>
+        </div>
+        <div class="prop-row">
+          <div class="prop-label">💻 주요 시스템</div>
+          <div class="prop-value">Navitaire 기반 항공 예약 · 발권 시스템(PSS), ServiceNow(ITSM)</div>
+        </div>
+        <div class="prop-row">
+          <div class="prop-label">🤝 주요 협업 대상</div>
+          <div class="prop-value">시스템 솔루션 파트너사(나비테어), GDS · NDC 연동 파트너사, 사내 유관부서</div>
+        </div>
+      </div>
+
+      <!-- overview gallery -->
+      <h2 class="overview-title" id="overview">🧭 핵심 업무 영역 한눈에 보기</h2>
+      <p class="overview-desc">총 5개 영역에서 PSS 운영부터 시스템 고도화, 사용자 교육, 비즈니스 자문, DX 전략까지 단계적으로 역할을 확장하며 수행했습니다.</p>
+
+      <div class="gallery">
+        <a class="card" href="#sec01">
+          <div class="card-head"><span class="card-icon">🛠️</span><span class="card-title">01 · 운영 · 서비스 관리</span></div>
+          <div class="card-desc">ITSM 기반 케이스 · 장애 대응, 접근통제(ITGC), 파트너사 계약 · 비용 관리를 통한 안정적 운영</div>
+          <span class="tag tag-blue">Y1 ~ Y3</span>
+        </a>
+        <a class="card" href="#sec02">
+          <div class="card-head"><span class="card-icon">🔗</span><span class="card-title">02 · 시스템 고도화 · 연동</span></div>
+          <div class="card-desc">신규 기능 검토, 인터라인 · GDS · NDC API 등 대외 연동 프로젝트 기획 및 추진</div>
+          <span class="tag tag-purple">Y1 ~ Y4</span>
+        </a>
+        <a class="card" href="#sec03">
+          <div class="card-head"><span class="card-icon">🎓</span><span class="card-title">03 · 사용자 역량 강화</span></div>
+          <div class="card-desc">LMS 교육 콘텐츠 운영 및 온사이트 교육을 통한 시스템 활용도 제고</div>
+          <span class="tag tag-green">Y1 ~ Y4</span>
+        </a>
+        <a class="card" href="#sec04">
+          <div class="card-head"><span class="card-icon">🧩</span><span class="card-title">04 · 비즈니스 구현 검토</span></div>
+          <div class="card-desc">비즈니스 요구사항에 대한 PSS 기능 · Configuration 구현 가능성 자문</div>
+          <span class="tag tag-orange">Y2 ~ Y4</span>
+        </a>
+        <a class="card" href="#sec05">
+          <div class="card-head"><span class="card-icon">🚀</span><span class="card-title">05 · DX 전략 · 과제 추진</span></div>
+          <div class="card-desc">항공 비즈니스 DX 전략 · 로드맵 수립 및 AI 적용 검토</div>
+          <span class="tag tag-yellow">Y4</span>
+        </a>
+      </div>
+
+      <hr class="divider">
+
+      <!-- ===================== SECTION 01 ===================== -->
+      <h2 class="section-title no-break" id="sec01">🛠️ 01. 항공 예약 시스템 운영 및 서비스 관리 <span class="tag tag-blue">Y1 ~ Y3</span></h2>
+
+      <h3 class="group-title">시스템 ITSM(ServiceNow) 운영 및 관리</h3>
+      <ul class="notion-list">
+        <li>ServiceNow에 접수되는 케이스를 상시 모니터링하고, 내부적으로 처리 가능한 이슈는 직접 조치하여 신속하게 해결</li>
+        <li>처리 지연이나 추가 확인이 필요한 케이스는 관련 자료 · 증빙을 요청하여 처리 속도와 커뮤니케이션 효율을 향상</li>
+        <li>시스템 솔루션사(나비테어)와 내부 사용자 간 발생하는 커뮤니케이션 이슈를 조율하여 양측의 원활한 협업을 지원</li>
+        <li>파트너사와의 정기 운영 협의체를 주관하여 운영 현안을 공유하고, 주요 · 중대 케이스는 별도 채널로 에스컬레이션 관리</li>
+      </ul>
+
+      <h3 class="group-title">시스템 긴급 장애 / 문의 대응</h3>
+      <ul class="notion-list">
+        <li>시스템 장애 발생 시 상황을 실시간으로 관제하고, 파트너사에 즉시 에스컬레이션하여 신속한 원인 파악과 조치를 유도</li>
+        <li>사전에 마련된 내부 대응 매뉴얼과 임시 대안(우회 프로세스)을 유관부서에 전파하여 업무 영향을 최소화</li>
+        <li>파트너사와 내부 유관부서 사이에서 장애 현황 · 진행 상황을 실시간으로 중계하여 신속한 의사결정을 지원</li>
+      </ul>
+
+      <h3 class="group-title">시스템 유지보수 · 정기 업그레이드 및 영향도 관리</h3>
+      <ul class="notion-list">
+        <li>현장에서 접수되는 시스템 버그 및 개선 아이템을 정리하고, 수정 기능에 대한 릴리즈 일정을 수립 · 관리</li>
+        <li>시스템 패칭 / 유지보수 작업을 모니터링하고, 다운타임이 예정된 경우 사전에 유관부서에 공지하여 업무 차질을 방지</li>
+        <li>API · DB 서비스 버전 업그레이드 시 내부 연계 시스템에 미치는 영향도를 분석하고, 연계 시스템 반영 작업을 주관</li>
+      </ul>
+
+      <h3 class="group-title">예약 시스템 접근통제 및 권한 · Configuration 변경 관리</h3>
+      <ul class="notion-list">
+        <li>내부회계 통제활동(ITGC) 기준에 따라 시스템 계정 및 권한 현황을 정기적으로 점검</li>
+        <li>IT 인력 및 시스템 사용자의 계정을 발급 · 변경 · 회수 처리하여 접근권한을 적시에 관리</li>
+        <li>신규 권한 부여 및 Configuration 변경 요청에 대해 영향도와 권한 적정성을 사전 검토하여 리스크를 최소화</li>
+      </ul>
+
+      <h3 class="group-title">파트너사 계약 및 운영 비용 통제</h3>
+      <ul class="notion-list">
+        <li>파트너사와의 계약 변경 발생 시 변경 조건, 비용 영향, 적용 범위를 검토하고 협상을 주관</li>
+        <li>파트너사 사용료(서비스 시간, LTB, HRS 등)를 검수하고 운영 비용 집행을 관리</li>
+      </ul>
+
+      <div class="callout">
+        <div class="callout-icon">💡</div>
+        <div>
+          <div class="callout-title">이 업무를 통해 할 수 있는 일</div>
+          <ul class="notion-list">
+            <li>ITSM(ServiceNow) 기반 서비스 운영 프로세스 설계 및 운영</li>
+            <li>시스템 장애 대응 체계 구축 및 다자간(파트너사–내부 유관부서) 커뮤니케이션 조율</li>
+            <li>ITGC 기준 계정 · 권한 통제 및 시스템 접근권한 관리</li>
+            <li>파트너사 계약 · 비용 검토, 협상 및 운영 비용 통제</li>
+          </ul>
+        </div>
+      </div>
+
+      <h4 class="table-title">🗂️ 관련 수행 이력 (프로젝트 / 과제)</h4>
+      <div class="table-hint">이 영역과 관련된 프로젝트 · 과제 이력을 셀을 클릭해 직접 입력하세요. "+ 새 항목 추가"로 행을 늘릴 수 있습니다.</div>
+      <table class="db-table">
+        <thead>
+          <tr><th style="width:24%;">프로젝트 / 과제명</th><th style="width:16%;">기간</th><th style="width:14%;">역할</th><th>주요 수행 내용 및 성과</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td contenteditable="true" data-placeholder="예: ServiceNow 케이스 처리 프로세스 개선"></td>
+            <td contenteditable="true" data-placeholder="YYYY.MM ~ YYYY.MM"></td>
+            <td contenteditable="true" data-placeholder="담당 역할"></td>
+            <td contenteditable="true" data-placeholder="구체적인 수행 내용과 성과를 작성하세요"></td>
+          </tr>
+          <tr>
+            <td contenteditable="true" data-placeholder=""></td>
+            <td contenteditable="true" data-placeholder=""></td>
+            <td contenteditable="true" data-placeholder=""></td>
+            <td contenteditable="true" data-placeholder=""></td>
+          </tr>
+          <tr class="add-row" data-cols="프로젝트 / 과제명|YYYY.MM ~ YYYY.MM|담당 역할|구체적인 수행 내용과 성과를 작성하세요" onclick="addRow(this)">
+            <td colspan="4">+ 새 항목 추가</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <hr class="divider">
+
+      <!-- ===================== SECTION 02 ===================== -->
+      <h2 class="section-title" id="sec02">🔗 02. 시스템 고도화 및 신규 연동 프로젝트 추진 <span class="tag tag-purple">Y1 ~ Y4</span></h2>
+
+      <h3 class="group-title">신규 기능 개발 검토 및 관리</h3>
+      <ul class="notion-list">
+        <li>주사용자(현업)의 요구사항을 기반으로 신규 기능 개발의 필요성과 적정성을 검토 · 판단</li>
+        <li>요구사항을 정리하고 영향도를 검토한 뒤, 개발 · 릴리즈 일정을 유관부서와 조율</li>
+      </ul>
+
+      <h3 class="group-title">신규 항공 솔루션 발굴 및 적용 가능성 검토</h3>
+      <ul class="notion-list">
+        <li>항공업계의 신규 솔루션 · 기술 동향을 파악하고, 자사 시스템에 적용 가능한지 검토 및 제안</li>
+      </ul>
+
+      <h3 class="group-title">대외 항공 · 판매 채널 연동 프로젝트 추진</h3>
+      <ul class="notion-list">
+        <li>타 항공사와의 인터라인 판매 연동 프로젝트를 조율하여 판매 채널 확장을 지원</li>
+        <li>GDS 스케줄 데이터 연동을 위한 요건을 정의하고 일정을 관리</li>
+        <li>정부 신고 시스템과의 메시지 송수신 연동을 관리</li>
+        <li>NDC API 기반의 파트너사 판매 채널 연동을 추진</li>
+        <li>외부 파트너 및 내부 유관부서 간 연동 이슈를 조율하고, 오픈(Go-live) 일정을 관리</li>
+      </ul>
+
+      <div class="callout">
+        <div class="callout-icon">💡</div>
+        <div>
+          <div class="callout-title">이 업무를 통해 할 수 있는 일</div>
+          <ul class="notion-list">
+            <li>현업 요구사항 분석부터 시스템 영향도 검토, 릴리즈 일정 조율까지 전 과정 수행</li>
+            <li>인터라인 · GDS · NDC API 등 대외 시스템 연동 프로젝트 기획 및 추진</li>
+            <li>신규 항공 솔루션 동향 파악 및 자사 환경 적용 가능성 분석</li>
+          </ul>
+        </div>
+      </div>
+
+      <h4 class="table-title">🗂️ 관련 수행 이력 (프로젝트 / 과제)</h4>
+      <div class="table-hint">이 영역과 관련된 프로젝트 · 과제 이력을 셀을 클릭해 직접 입력하세요. "+ 새 항목 추가"로 행을 늘릴 수 있습니다.</div>
+      <table class="db-table">
+        <thead>
+          <tr><th style="width:24%;">프로젝트 / 과제명</th><th style="width:16%;">기간</th><th style="width:14%;">역할</th><th>주요 수행 내용 및 성과</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td contenteditable="true" data-placeholder="예: NDC API 기반 판매 채널 연동 프로젝트"></td>
+            <td contenteditable="true" data-placeholder="YYYY.MM ~ YYYY.MM"></td>
+            <td contenteditable="true" data-placeholder="담당 역할"></td>
+            <td contenteditable="true" data-placeholder="구체적인 수행 내용과 성과를 작성하세요"></td>
+          </tr>
+          <tr>
+            <td contenteditable="true" data-placeholder=""></td>
+            <td contenteditable="true" data-placeholder=""></td>
+            <td contenteditable="true" data-placeholder=""></td>
+            <td contenteditable="true" data-placeholder=""></td>
+          </tr>
+          <tr class="add-row" data-cols="프로젝트 / 과제명|YYYY.MM ~ YYYY.MM|담당 역할|구체적인 수행 내용과 성과를 작성하세요" onclick="addRow(this)">
+            <td colspan="4">+ 새 항목 추가</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <hr class="divider">
+
+      <!-- ===================== SECTION 03 ===================== -->
+      <h2 class="section-title" id="sec03">🎓 03. 사용자 역량 강화 및 시스템 활용도 제고 <span class="tag tag-green">Y1 ~ Y4</span></h2>
+
+      <ul class="notion-list">
+        <li>LMS 기반의 시스템 교육 콘텐츠를 운영하고, 사용자별 학습 현황을 모니터링</li>
+        <li>시스템 전문가를 활용한 온사이트 교육을 주기적으로 기획 · 운영하여 현업의 시스템 활용 역량을 강화</li>
+      </ul>
+
+      <div class="callout">
+        <div class="callout-icon">💡</div>
+        <div>
+          <div class="callout-title">이 업무를 통해 할 수 있는 일</div>
+          <ul class="notion-list">
+            <li>LMS 기반 교육 콘텐츠 기획 및 학습 현황 관리</li>
+            <li>온사이트 전문가 교육 프로그램 기획 · 운영</li>
+          </ul>
+        </div>
+      </div>
+
+      <h4 class="table-title">🗂️ 관련 수행 이력 (프로젝트 / 과제)</h4>
+      <div class="table-hint">이 영역과 관련된 프로젝트 · 과제 이력을 셀을 클릭해 직접 입력하세요. "+ 새 항목 추가"로 행을 늘릴 수 있습니다.</div>
+      <table class="db-table">
+        <thead>
+          <tr><th style="width:24%;">프로젝트 / 과제명</th><th style="width:16%;">기간</th><th style="width:14%;">역할</th><th>주요 수행 내용 및 성과</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td contenteditable="true" data-placeholder="예: 신규 사용자 온사이트 교육 프로그램 기획"></td>
+            <td contenteditable="true" data-placeholder="YYYY.MM ~ YYYY.MM"></td>
+            <td contenteditable="true" data-placeholder="담당 역할"></td>
+            <td contenteditable="true" data-placeholder="구체적인 수행 내용과 성과를 작성하세요"></td>
+          </tr>
+          <tr class="add-row" data-cols="프로젝트 / 과제명|YYYY.MM ~ YYYY.MM|담당 역할|구체적인 수행 내용과 성과를 작성하세요" onclick="addRow(this)">
+            <td colspan="4">+ 새 항목 추가</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <hr class="divider">
+
+      <!-- ===================== SECTION 04 ===================== -->
+      <h2 class="section-title" id="sec04">🧩 04. 항공 예약 · 판매 시스템(PSS) 기반 비즈니스 구현 가능성 검토 <span class="tag tag-orange">Y2 ~ Y4</span></h2>
+
+      <ul class="notion-list">
+        <li>현업 부서로부터 접수된 비즈니스 요구사항에 대해 시스템 구현 가능성을 검토</li>
+        <li>예약 · 판매 시스템의 기능 및 Configuration으로 해당 요구사항을 적용할 수 있는지 확인</li>
+        <li>구현 방식, 적용 범위, 제약 사항을 검토하여 현업에 자문 제공</li>
+      </ul>
+
+      <div class="callout">
+        <div class="callout-icon">💡</div>
+        <div>
+          <div class="callout-title">이 업무를 통해 할 수 있는 일</div>
+          <ul class="notion-list">
+            <li>비즈니스 요구사항을 시스템 기능 · Configuration과 매핑하여 구현 가능성 자문</li>
+            <li>구현 방식 · 적용 범위 · 제약사항을 정리한 검토 의견서 작성</li>
+          </ul>
+        </div>
+      </div>
+
+      <h4 class="table-title">🗂️ 관련 수행 이력 (프로젝트 / 과제)</h4>
+      <div class="table-hint">이 영역과 관련된 프로젝트 · 과제 이력을 셀을 클릭해 직접 입력하세요. "+ 새 항목 추가"로 행을 늘릴 수 있습니다.</div>
+      <table class="db-table">
+        <thead>
+          <tr><th style="width:24%;">프로젝트 / 과제명</th><th style="width:16%;">기간</th><th style="width:14%;">역할</th><th>주요 수행 내용 및 성과</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td contenteditable="true" data-placeholder="예: 부가서비스 판매 기능 도입 가능성 검토"></td>
+            <td contenteditable="true" data-placeholder="YYYY.MM ~ YYYY.MM"></td>
+            <td contenteditable="true" data-placeholder="담당 역할"></td>
+            <td contenteditable="true" data-placeholder="구체적인 수행 내용과 성과를 작성하세요"></td>
+          </tr>
+          <tr class="add-row" data-cols="프로젝트 / 과제명|YYYY.MM ~ YYYY.MM|담당 역할|구체적인 수행 내용과 성과를 작성하세요" onclick="addRow(this)">
+            <td colspan="4">+ 새 항목 추가</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <hr class="divider">
+
+      <!-- ===================== SECTION 05 ===================== -->
+      <h2 class="section-title" id="sec05">🚀 05. 항공 비즈니스 DX 전략 및 과제 추진 <span class="tag tag-yellow">Y4</span></h2>
+
+      <ul class="notion-list">
+        <li>항공 비즈니스의 DX 전략 및 중장기 로드맵을 수립</li>
+        <li>비즈니스 프로세스 개선 및 디지털 전환 과제를 발굴 · 추진</li>
+        <li>고객 접점 서비스 고도화 방안을 검토하고, AI 적용 가능성을 분석</li>
+      </ul>
+
+      <div class="callout">
+        <div class="callout-icon">💡</div>
+        <div>
+          <div class="callout-title">이 업무를 통해 할 수 있는 일</div>
+          <ul class="notion-list">
+            <li>항공 비즈니스 DX 전략 및 로드맵 수립</li>
+            <li>디지털 전환 과제 발굴 및 추진, AI 적용 검토</li>
+          </ul>
+        </div>
+      </div>
+
+      <h4 class="table-title">🗂️ 관련 수행 이력 (프로젝트 / 과제)</h4>
+      <div class="table-hint">이 영역과 관련된 프로젝트 · 과제 이력을 셀을 클릭해 직접 입력하세요. "+ 새 항목 추가"로 행을 늘릴 수 있습니다.</div>
+      <table class="db-table">
+        <thead>
+          <tr><th style="width:24%;">프로젝트 / 과제명</th><th style="width:16%;">기간</th><th style="width:14%;">역할</th><th>주요 수행 내용 및 성과</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td contenteditable="true" data-placeholder="예: 항공 비즈니스 DX 로드맵 수립"></td>
+            <td contenteditable="true" data-placeholder="YYYY.MM ~ YYYY.MM"></td>
+            <td contenteditable="true" data-placeholder="담당 역할"></td>
+            <td contenteditable="true" data-placeholder="구체적인 수행 내용과 성과를 작성하세요"></td>
+          </tr>
+          <tr class="add-row" data-cols="프로젝트 / 과제명|YYYY.MM ~ YYYY.MM|담당 역할|구체적인 수행 내용과 성과를 작성하세요" onclick="addRow(this)">
+            <td colspan="4">+ 새 항목 추가</td>
+          </tr>
+        </tbody>
+      </table>
+
+    </div>
+  </main>
+</div>
+
+<button class="print-btn" onclick="window.print()">🖨️ PDF로 저장 / 인쇄</button>
+
+<script>
+  // mobile sidebar toggle
+  var menuBtn = document.querySelector('.menu-btn');
+  var sidebar = document.querySelector('.sidebar');
+  menuBtn.addEventListener('click', function(){ sidebar.classList.toggle('open'); });
+  document.addEventListener('click', function(e){
+    if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && !menuBtn.contains(e.target)) {
+      sidebar.classList.remove('open');
+    }
+  });
+  document.querySelectorAll('.sidebar nav a').forEach(function(a){
+    a.addEventListener('click', function(){ sidebar.classList.remove('open'); });
+  });
+
+  // active link highlighting
+  var links = document.querySelectorAll('.sidebar nav a');
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if (entry.isIntersecting) {
+        var id = '#' + entry.target.id;
+        links.forEach(function(a){ a.classList.toggle('active', a.getAttribute('href') === id); });
+      }
+    });
+  }, { rootMargin: '-35% 0px -55% 0px' });
+  links.forEach(function(a){
+    var target = document.querySelector(a.getAttribute('href'));
+    if (target) observer.observe(target);
+  });
+
+  // add row to history tables
+  function addRow(row){
+    var cols = row.getAttribute('data-cols').split('|');
+    var tr = document.createElement('tr');
+    cols.forEach(function(p){
+      var td = document.createElement('td');
+      td.contentEditable = "true";
+      td.setAttribute('data-placeholder', p);
+      tr.appendChild(td);
+    });
+    row.parentNode.insertBefore(tr, row);
+  }
+</script>
+</body>
+</html>
